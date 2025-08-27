@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="ro">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Librarian</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      /* slate-900 */
+      --text: #eef2f7;
+      /* almost slate-100 */
+      --panel: #1e293b;
+      /* slate-800 */
+      --border: #334155;
+      /* slate-700 */
+      --accent: #84cc16;
+      /* lime-500 */
+      --bubbleUserText: #0f172a;
+    }
+
+    html[data-theme="light"] {
+      --bg: #f8fafc;
+      /* slate-50 */
+      --text: #0f172a;
+      /* slate-900 */
+      --panel: #ffffff;
+      /* white */
+      --border: #e5e7eb;
+      /* gray-200 */
+      --accent: #65a30d;
+      /* lime-600 */
+      --bubbleUserText: #0f172a;
+    }
+
+    /* frame 2 coloane */
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: 18rem 1fr;
+      height: 100dvh;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 1rem;
+      overflow: auto;
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      gap: .6rem;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.35rem;
+    }
+
+    .chat-wrap {
+      flex: 1;
+      overflow: auto;
+    }
+
+    .chat {
+      max-width: 48rem;
+      margin: 1rem auto 6rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bubbleUserText);
+    }
+
+    .field {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      outline: none;
+    }
+
+    /* bule */
+    .bubble-assistant {
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .bubble-user {
+      background: var(--accent);
+      color: var(--bubbleUserText);
+    }
+
+    /* sidebar sections */
+    .side-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .side-section__title {
+      font-size: .72rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      opacity: .7;
+      margin-bottom: .5rem;
+    }
+
+    .side-list {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: .45rem .7rem;
+      border-radius: .75rem;
+    }
+
+    /* conversații - item */
+    .conv-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: .8rem;
+      padding: .55rem .6rem;
+    }
+
+    .conv-item:hover {
+      filter: brightness(1.05);
+    }
+
+    .conv-item--active {
+      outline: 2px solid var(--accent);
+    }
+
+    .conv-item__btn {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .conv-item__more button {
+      padding: .25rem .45rem;
+      border-radius: .5rem;
+      border: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    /* settings panel (floating) */
+    .settings {
+      position: fixed;
+      top: 4.5rem;
+      right: 1rem;
+      width: 22rem;
+      z-index: 50;
+      border-radius: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-grid">
+    <!-- Sidebar stânga -->
+    <aside class="sidebar">
+      <div class="side-section">
+        <div class="side-section__title">Conversații</div>
+        <div class="flex gap-2 mb-3">
+          <button id="newConvBtn" class="chip hover:brightness-95">+ Nou</button>
+          <button id="exportConvBtn" class="chip hover:brightness-95">Export</button>
+        </div>
+        <ul id="convList" class="side-list"></ul>
+      </div>
+
+      <div class="side-section">
+        <div class="side-section__title">Favorite</div>
+        <ul id="favList" class="side-list"></ul>
+      </div>
+
+      <div class="side-section">
+        <div class="side-section__title">De citit</div>
+        <ul id="toReadList" class="side-list"></ul>
+      </div>
+    </aside>
+
+    <!-- Coloana dreapta -->
+    <div class="content">
+      <!-- Header -->
+      <header class="topbar">
+        <h1 class="brand"><span></span> Bibliotecar</h1>
+        <div class="flex gap-2">
+          <label class="chip flex items-center gap-2 cursor-pointer">
+            <input id="themeToggle" type="checkbox" />
+            <span>Light theme</span>
+          </label>
+          <button id="settingsBtn" class="chip hover:brightness-95" title="Setări">⚙️</button>
+        </div>
+      </header>
+
+      <!-- Setări (floating) -->
+      <div id="settingsPanel" class="settings card p-4 hidden">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm uppercase tracking-wide opacity-70">Setări</h2>
+          <button id="closeSettings" class="chip py-1">✕</button>
+        </div>
+
+        <label class="flex items-center gap-3 mb-3">
+          <input id="ttsToggle" type="checkbox" class="accent-lime-400">
+          <span class="text-sm">🔊 TTS</span>
+        </label>
+
+        <div class="mb-3">
+          <label class="block text-xs opacity-70 mb-1">Top-K</label>
+          <input id="topk" type="number" min="1" max="10" value="5" class="field w-full rounded px-2 py-1 text-sm">
+        </div>
+
+        <div class="mb-3">
+          <label class="block text-xs opacity-70 mb-1">Temperature</label>
+          <input id="temp" type="number" step="0.1" min="0" max="1.2" value="0.4"
+            class="field w-full rounded px-2 py-1 text-sm">
+        </div>
+
+        <button id="resetBtn" class="chip w-full mt-2">🧹 Reset</button>
+      </div>
+
+      <!-- Chat -->
+      <main class="chat-wrap">
+        <div id="chat" class="chat"></div>
+      </main>
+
+      <!-- Composer -->
+      <footer class="composer border-t border-[var(--border)] p-4">
+        <div class="flex gap-2 max-w-3xl mx-auto">
+          <button id="micBtn" class="chip hover:brightness-95" title="Vorbește">🎙️</button>
+          <input id="input" class="field flex-1 px-4 py-3 rounded-xl"
+            placeholder="Întreabă despre cărți, teme sau cere recomandări…" />
+          <button id="sendBtn" class="btn-primary px-5 py-3 rounded-xl font-semibold hover:brightness-95">
+            Trimite
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- EL ---------- */
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+    const themeToggle = document.getElementById('themeToggle');
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const closeSettings = document.getElementById('closeSettings');
+    const ttsToggle = document.getElementById('ttsToggle');
+    const topkEl = document.getElementById('topk');
+    const tempEl = document.getElementById('temp');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const favListEl = document.getElementById('favList');
+    const toReadListEl = document.getElementById('toReadList');
+    const convListEl = document.getElementById('convList');
+    const THEME_KEY = 'smartlib_theme';
+    const FAV_KEY = 'smartlib_favs';
+    const READ_KEY = 'smartlib_toread';
+
+    /* ---------- THEME ---------- */
+    function applyTheme(t) { document.documentElement.setAttribute('data-theme', t); }
+    function loadTheme() {
+      const t = localStorage.getItem(THEME_KEY) || 'dark';
+      applyTheme(t); themeToggle.checked = (t === 'light');
+    }
+    themeToggle.addEventListener('change', () => {
+      const t = themeToggle.checked ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, t); applyTheme(t);
+    });
+    loadTheme();
+
+    /* ---------- SETTINGS PANEL ---------- */
+    const openSettings = () => settingsPanel.classList.remove('hidden');
+    const closeSettingsFn = () => settingsPanel.classList.add('hidden');
+    settingsBtn.onclick = (e) => { e.stopPropagation(); openSettings(); };
+    closeSettings.onclick = closeSettingsFn;
+    document.addEventListener('click', (e) => {
+      if (!settingsPanel.classList.contains('hidden')) {
+        const inside = settingsPanel.contains(e.target) || settingsBtn.contains(e.target);
+        if (!inside) closeSettingsFn();
+      }
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSettingsFn(); });
+
+    /* ---------- FAVORITE / TO READ ---------- */
+    function getList(k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } }
+    function setList(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+    function addUnique(k, text) {
+      const arr = getList(k); if (!arr.includes(text)) { arr.unshift(text); setList(k, arr); renderLists(); }
+    }
+    function removeAt(k, idx) {
+      const arr = getList(k); arr.splice(idx, 1); setList(k, arr); renderLists();
+    }
+    function renderLists() {
+      favListEl.innerHTML = ''; getList(FAV_KEY).forEach((t, i) => {
+        const li = document.createElement('li'); li.className = 'card rounded-xl p-2 flex items-start justify-between gap-3';
+        li.innerHTML = `<span class="block pr-2">${t}</span>`;
+        const rm = document.createElement('button'); rm.className = 'chip py-1'; rm.textContent = 'Șterge';
+        rm.onclick = () => removeAt(FAV_KEY, i); li.appendChild(rm); favListEl.appendChild(li);
+      });
+      toReadListEl.innerHTML = ''; getList(READ_KEY).forEach((t, i) => {
+        const li = document.createElement('li'); li.className = 'card rounded-xl p-2 flex items-start justify-between gap-3';
+        li.innerHTML = `<span class="block pr-2">${t}</span>`;
+        const rm = document.createElement('button'); rm.className = 'chip py-1'; rm.textContent = 'Șterge';
+        rm.onclick = () => removeAt(READ_KEY, i); li.appendChild(rm); toReadListEl.appendChild(li);
+      });
+    }
+    renderLists();
+
+    /* ---------- CONVERSAȚII (localStorage) ---------- */
+    const CONVS_KEY = 'SMARTLIB_CONVS', ACTIVE_KEY = 'SMARTLIB_ACTIVE';
+    function uid() { return Math.random().toString(36).slice(2, 10); }
+    function now() { return Date.now(); }
+    function loadConvs() { try { return JSON.parse(localStorage.getItem(CONVS_KEY) || '{}'); } catch { return {}; } }
+    function saveConvs(c) { localStorage.setItem(CONVS_KEY, JSON.stringify(c)); }
+    function setActive(id) { localStorage.setItem(ACTIVE_KEY, id); }
+    function getActive() { return localStorage.getItem(ACTIVE_KEY); }
+
+    function ensureFirstConv() {
+      const convs = loadConvs(); let id = getActive();
+      if (!id || !convs[id]) {
+        id = uid();
+        convs[id] = {
+          id, title: 'Conversație nouă', createdAt: now(), updatedAt: now(),
+          messages: [{ role: 'assistant', content: 'Salut! Spune-mi ce te interesează și îți recomand ceva potrivit.', ts: now() }]
+        };
+        saveConvs(convs); setActive(id);
+      }
+    }
+    function appendMsgToActive(role, content) {
+      const convs = loadConvs(), id = getActive(); if (!convs[id]) return;
+      convs[id].messages.push({ role, content, ts: now() }); convs[id].updatedAt = now();
+      if (convs[id].title === 'Conversație nouă' && role === 'assistant') {
+        const t = content.split(/[.!?\n]/)[0]?.trim(); if (t) convs[id].title = t.slice(0, 60);
+      }
+      saveConvs(convs);
+    }
+    function newConversation() {
+      const convs = loadConvs(); const id = uid();
+      convs[id] = {
+        id, title: 'Conversație nouă', createdAt: now(), updatedAt: now(),
+        messages: [{ role: 'assistant', content: 'Salut! Începem o discuție nouă. Despre ce ai vrea să citim azi?', ts: now() }]
+      };
+      saveConvs(convs); setActive(id); renderChatFromConv(id); renderConvList();
+    }
+    function deleteConv(id) {
+      const convs = loadConvs(); delete convs[id]; saveConvs(convs);
+      if (getActive() === id) { const first = Object.keys(convs)[0]; if (first) setActive(first); }
+      renderConvList(); if (getActive()) renderChatFromConv(getActive());
+    }
+    function renameConv(id, title) {
+      const convs = loadConvs(); if (convs[id]) { convs[id].title = title || 'Conversație'; convs[id].updatedAt = now(); saveConvs(convs); renderConvList(); }
+    }
+    function exportActiveConv() {
+      const convs = loadConvs(), id = getActive(); if (!id || !convs[id]) return;
+      const data = convs[id]; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      const safe = (data.title || 'conversatie').replace(/[^\w\s\-]+/g, '').slice(0, 40).trim().replace(/\s+/g, '_');
+      a.download = `${safe || 'conversatie'}.json`; a.click();
+    }
+
+    function renderConvList() {
+      const convs = loadConvs(); const ids = Object.keys(convs).sort((a, b) => convs[b].updatedAt - convs[a].updatedAt);
+      convListEl.innerHTML = ''; ids.forEach(id => {
+        const c = convs[id]; const li = document.createElement('li');
+        li.className = 'conv-item' + (id === getActive() ? ' conv-item--active' : '');
+        const left = document.createElement('button'); left.className = 'conv-item__btn';
+        left.textContent = c.title || 'Conversație'; left.title = new Date(c.updatedAt).toLocaleString();
+        left.onclick = () => { setActive(id); renderChatFromConv(id); renderConvList(); };
+        const more = document.createElement('div'); more.className = 'conv-item__more flex gap-1';
+        const rnm = document.createElement('button'); rnm.textContent = 'Rename';
+        rnm.onclick = () => { const nt = prompt('Titlu conversație:', c.title || ''); if (nt !== null) renameConv(id, nt.trim()); };
+        const del = document.createElement('button'); del.textContent = 'Șterge';
+        del.onclick = () => { if (confirm('Sigur ștergi conversația?')) deleteConv(id); };
+        more.append(rnm, del); li.append(left, more); convListEl.appendChild(li);
+      });
+    }
+    function renderChatFromConv(id) {
+      const convs = loadConvs(); const c = convs[id]; if (!c) return;
+      chat.innerHTML = ''; c.messages.forEach(m => addBubble(m.role, m.content));
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    document.getElementById('newConvBtn').onclick = newConversation;
+    document.getElementById('exportConvBtn').onclick = exportActiveConv;
+
+    ensureFirstConv(); renderConvList(); renderChatFromConv(getActive());
+
+    /* ---------- UI: bule ---------- */
+    function addBubble(role, text, opts = {}) {
+      const wrap = document.createElement('div');
+      wrap.className = 'flex ' + (role === 'user' ? 'justify-end' : 'justify-start');
+
+      const container = document.createElement('div');
+      container.className = (role === 'user'
+        ? 'max-w-[80%] rounded-2xl px-4 py-3 bubble-user'
+        : 'max-w-[80%] rounded-2xl px-4 py-3 bubble-assistant card');
+
+      const msg = document.createElement('div');
+      msg.textContent = text || '';
+      container.appendChild(msg);
+
+      // Slot pentru audio (TTS)
+      const audioSlot = document.createElement('div');
+      audioSlot.className = 'mt-3';
+      container.appendChild(audioSlot);
+
+      wrap.appendChild(container);
+      chat.appendChild(wrap);
+
+      // === thinking mode: fără butoane, cu animație „Gândesc...” ===
+      let thinkTimer = null;
+      if (opts.thinking && role === 'assistant') {
+        let i = 0;
+        msg.textContent = '⏳ Gândesc';
+        thinkTimer = setInterval(() => {
+          i = (i + 1) % 3;
+          msg.textContent = '⏳ Gândesc' + '.'.repeat(i + 1);
+        }, 500);
+      } else if (role === 'assistant') {
+        // doar pe răspunsurile finale (nu thinking) adăugăm bara de acțiuni
+        addActionBar(container, msg.textContent);
+      }
+
+      // metode utile pentru placeholder
+      function setText(newText) {
+        msg.textContent = newText;
+      }
+      function stopThinking() {
+        if (thinkTimer) {
+          clearInterval(thinkTimer);
+          thinkTimer = null;
+        }
+      }
+
+      return { container, audioSlot, setText, stopThinking };
+    }
+
+    /* ---------- Chat logic ---------- */
+    async function sendMessage(text) {
+      if (!text) return;
+      const userBubble = addBubble('user', text);
+      input.value = ''; sendBtn.disabled = true;
+
+      // placeholder assistant
+      const placeholder = addBubble('assistant', '', { thinking: true });
+
+      // salvează mesaj user în conversația activă
+      appendMsgToActive('user', text);
+
+      try {
+        const r = await fetch('/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            top_k: parseInt(topkEl.value || '5', 10),
+            temperature: parseFloat(tempEl.value || '0.4')
+          })
+        });
+        const data = await r.json();
+        const answer = data.answer || data.error || '(eroare)';
+        placeholder.container.querySelector('div').textContent = answer;
+
+        placeholder.stopThinking();
+        placeholder.setText(answer);
+        addActionBar(placeholder.container, answer);
+
+        // salvează răspuns
+        appendMsgToActive('assistant', answer);
+        renderConvList();
+
+        // TTS
+        if (ttsToggle.checked && answer && answer.length) {
+          try {
+            const r2 = await fetch('/tts', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: answer.slice(0, 1200) })
+            });
+            if (r2.ok) { const blob = await r2.blob(); appendAudio(placeholder.audioSlot, blob); }
+          } catch (e) { console.warn('TTS failed', e); }
+        }
+      } catch (e) {
+        placeholder.container.querySelector('div').textContent = 'Eroare: ' + e.message;
+      } finally { sendBtn.disabled = false; }
+    }
+
+    sendBtn.onclick = () => sendMessage(input.value.trim());
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value.trim()); }
+    });
+
+    resetBtn.onclick = () => {
+      chat.innerHTML = '';
+      const first = addBubble('assistant', 'Istoricul a fost curățat. Spune-mi ce te interesează!');
+      closeSettingsFn();
+    };
+
+    /* ---------- STT (microfon) ---------- */
+    let mediaRecorder, chunks = [];
+    micBtn.onclick = async () => {
+      try {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+          chunks = []; mediaRecorder.ondataavailable = e => chunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            const form = new FormData(); form.append('audio', blob, 'mic.webm');
+            try {
+              const r = await fetch('/stt', { method: 'POST', body: form });
+              const data = await r.json(); const text = (data.text || '').trim();
+              if (text) sendMessage(text);
+            } catch (e) { console.warn('STT failed', e); }
+          };
+          mediaRecorder.start(); micBtn.textContent = '⏹️';
+        } else {
+          mediaRecorder.stop(); micBtn.textContent = '🎙️';
+        }
+      } catch (e) { alert('Microfon indisponibil: ' + e.message); }
+    };
+
+    function extractTitleFromAnswer(answer) {
+      // caută mai întâi în ghilimele
+      let match = answer.match(/[„“"']([^"”“']+)[”"']/);
+      if (match) return match[1].trim();
+
+      // dacă nu, caută bold markdown: **Titlu**
+      match = answer.match(/\*\*([^*]+)\*\*/);
+      if (match) return match[1].trim();
+
+      // fallback: primele 5 cuvinte
+      return answer.split(/\s+/).slice(0, 5).join(" ") + "...";
+    }
+
+
+
+    function addActionBar(containerEl, answerText) {
+  // șterge bara precedentă (dacă există)
+  const oldBar = containerEl.querySelector('[data-action-bar]');
+  if (oldBar) oldBar.remove();
+
+  const bar = document.createElement('div');
+  bar.setAttribute('data-action-bar', '1');
+  bar.className = 'mt-2 flex gap-2 text-sm opacity-90';
+
+  const favBtn = document.createElement('button');
+  favBtn.className = 'chip py-1';
+  favBtn.textContent = '❤️ Favorite';
+  favBtn.onclick = () => {
+    const title = extractTitleFromAnswer(answerText);
+    addUnique(FAV_KEY, title);
+  };
+
+  const readBtn = document.createElement('button');
+  readBtn.className = 'chip py-1';
+  readBtn.textContent = '📚 De citit';
+  readBtn.onclick = () => {
+    const title = extractTitleFromAnswer(answerText);
+    addUnique(READ_KEY, title);
+  };
+
+  bar.append(favBtn, readBtn);
+  containerEl.appendChild(bar);
+}
+
+function appendAudio(slotEl, blob) {
+  // golește slot-ul audio (dacă e ceva deja)
+  slotEl.innerHTML = '';
+  const audio = document.createElement('audio');
+  audio.controls = true;
+  audio.className = 'w-[260px]';
+  audio.src = URL.createObjectURL(blob);
+  slotEl.appendChild(audio);
+}
+
+
+  </script>
+</body>
+
+</html>

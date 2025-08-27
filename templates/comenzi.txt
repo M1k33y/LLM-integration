@@ -1,0 +1,13 @@
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process                                                                                       
+
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+
+#python prepare_dataset.py --input "data\books.csv" --output "book_summaries.json" --max 2000
+
+rmdir /s /q chroma_db
+
+python ingest.py
+
+python app.py
