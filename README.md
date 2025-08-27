@@ -1,4 +1,4 @@
-# 📚 Smart Librarian – AI Chatbot with RAG + OpenAI
+#  Smart Librarian
 
 **Smart Librarian** is an AI-powered chatbot that recommends books based on user interests.  
 It combines **RAG (Retrieval-Augmented Generation)** with **ChromaDB** for semantic search across 2000+ book summaries, and **OpenAI GPT** for natural, conversational answers.
@@ -47,4 +47,5 @@ python app.py
 👉 The bot retrieves the most relevant summaries and gives a conversational recommendation.
 
 ---
+
 
