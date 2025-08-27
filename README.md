@@ -33,3 +33,17 @@ python ingest.py
 streamlit run streamlit_app.py
 # or
 python app.py
+```
+## 🛠️ Tech Stack
+- **Python** (Flask / Streamlit)
+- **ChromaDB** (vector store for RAG)
+- **OpenAI GPT** (chat & embeddings)
+- **TailwindCSS** (for UI)
+
+---
+
+## 💡 Example prompt
+> *“Recommend me a book about friendship and magic.”*  
+👉 The bot retrieves the most relevant summaries and gives a conversational recommendation.
+
+---
