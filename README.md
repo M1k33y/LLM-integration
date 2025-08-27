@@ -15,8 +15,8 @@ It combines **RAG (Retrieval-Augmented Generation)** with **ChromaDB** for seman
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/username/smart-librarian.git
-cd smart-librarian
+git clone https://github.com/M1k33y/LLM-integration.git
+cd LLM-integration
 
 # 2. Create virtual environment & install dependencies
 python -m venv .venv
@@ -47,3 +47,4 @@ python app.py
 👉 The bot retrieves the most relevant summaries and gives a conversational recommendation.
 
 ---
+
